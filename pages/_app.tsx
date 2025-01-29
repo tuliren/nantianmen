@@ -25,11 +25,9 @@ export default function MyApp({ Component, pageProps }: AppProps) {
       <PlausibleProvider domain="nantianmen.liren.dev" enabled={enableAnalytics}>
         <MantineProvider>
           <Notifications />
-          <AppShell padding="lg">
-            <Container pt="xl" size="xl">
+            <Container fluid>
               <Component {...pageProps} />
             </Container>
-          </AppShell>
         </MantineProvider>
       </PlausibleProvider>
     </>

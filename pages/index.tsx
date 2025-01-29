@@ -1,5 +1,10 @@
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
+import {
+  RewardType,
+  getRandomReward,
+  SortedRewards, RewardMap,
+} from '@/components/rewards';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
@@ -7,7 +12,7 @@ import { Slider } from '@/components/ui/slider';
 interface MoneyBag {
   x: number;
   y: number;
-  value: number;
+  type: RewardType;
 }
 
 interface Bomb {
@@ -24,9 +29,7 @@ interface GameState {
   bombs: Bomb[];
   goblinX: number;
   goblinDirection: number;
-  collectedCoins: number;
-  collectedBills: number;
-  collectedGems: number;
+  collection: Record<RewardType, number>;
 }
 
 interface GameParams {
@@ -54,21 +57,24 @@ const DEFAULT_PARAMS: GameParams = {
   bombSpawnRate: 0.01,
 };
 
+const DefaultGameState: GameState = {
+  isGameOver: false,
+  score: 0,
+  cartX: GAME_WIDTH / 2,
+  cartVelocity: 0,
+  moneyBags: [],
+  bombs: [],
+  goblinX: 0,
+  goblinDirection: 1,
+  collection: SortedRewards.reduce((acc, reward) => {
+    acc[reward.type] = 0;
+    return acc;
+  }, {} as Record<RewardType, number>),
+};
+
 const MoneyGame: FC = () => {
   const [gameParams, setGameParams] = useState<GameParams>(DEFAULT_PARAMS);
-  const [gameState, setGameState] = useState<GameState>({
-    isGameOver: false,
-    score: 0,
-    cartX: GAME_WIDTH / 2,
-    cartVelocity: 0,
-    moneyBags: [],
-    bombs: [],
-    goblinX: 0,
-    goblinDirection: 1,
-    collectedCoins: 0,
-    collectedBills: 0,
-    collectedGems: 0,
-  });
+  const [gameState, setGameState] = useState<GameState>({ ...DefaultGameState });
 
   const [isMovingLeft, setIsMovingLeft] = useState(false);
   const [isMovingRight, setIsMovingRight] = useState(false);
@@ -143,10 +149,11 @@ const MoneyGame: FC = () => {
         // Spawn new money bags randomly
         const newMoneyBags = [...prevState.moneyBags];
         if (Math.random() < gameParams.moneySpawnRate) {
+          const newReward = getRandomReward();
           newMoneyBags.push({
             x: Math.random() * (GAME_WIDTH - MONEY_SIZE),
             y: -MONEY_SIZE,
-            value: Math.floor(Math.random() * 3) + 1,
+            type: newReward.type,
           });
         }
 
@@ -162,9 +169,10 @@ const MoneyGame: FC = () => {
         // Update positions and check collisions
         let newScore = prevState.score;
         let gameOver = false;
-        let collectedCoins = prevState.collectedCoins;
-        let collectedBills = prevState.collectedBills;
-        let collectedGems = prevState.collectedGems;
+        const collection: Record<RewardType, number> = Object.values(RewardType).reduce((acc, type) => {
+          acc[type] = prevState.collection[type];
+          return acc;
+        }, {} as Record<RewardType, number>);
 
         // Update money bags
         const updatedMoneyBags = newMoneyBags.filter((bag) => {
@@ -176,14 +184,8 @@ const MoneyGame: FC = () => {
             bag.x + MONEY_SIZE > newCartX - CART_WIDTH / 2 &&
             bag.x < newCartX + CART_WIDTH / 2
           ) {
-            newScore += bag.value;
-            if (bag.value === 1) {
-              collectedCoins++;
-            } else if (bag.value === 2) {
-              collectedBills++;
-            } else {
-              collectedGems++;
-            }
+            newScore += RewardMap[bag.type].value;
+            collection[bag.type]++;
             return false;
           }
 
@@ -217,9 +219,7 @@ const MoneyGame: FC = () => {
           goblinDirection: newGoblinDirection,
           score: newScore,
           isGameOver: gameOver,
-          collectedCoins,
-          collectedBills,
-          collectedGems,
+          collection,
         };
       });
 
@@ -239,91 +239,95 @@ const MoneyGame: FC = () => {
   }, [updateGame]);
 
   const restartGame = (): void => {
-    setGameState({
-      isGameOver: false,
-      score: 0,
-      cartX: GAME_WIDTH / 2,
-      cartVelocity: 0,
-      moneyBags: [],
-      bombs: [],
-      goblinX: 0,
-      goblinDirection: 1,
-      collectedCoins: 0,
-      collectedBills: 0,
-      collectedGems: 0,
-    });
+    setGameState({ ...DefaultGameState });
     lastTimeRef.current = 0;
   };
 
   return (
-    <div className="grid grid-cols-[300px_800px_300px] gap-4 content-center items-start h-screen p-4 bg-accent">
+    <div className="flex justify-center items-center min-h-screen p-8">
       {/* Left Side - Parameters */}
-      <Card className="p-4">
-        <CardHeader>
-          <CardTitle>Game Parameters</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Cart Speed</label>
-            <Slider
-              value={[gameParams.cartSpeed * 100]}
-              onValueChange={(value) =>
-                setGameParams((prev) => ({
-                  ...prev,
-                  cartSpeed: value[0] / 100,
-                }))
-              }
-              max={100}
-              step={1}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Cart Max Speed</label>
-            <Slider
-              value={[gameParams.cartMaxSpeed * 10]}
-              onValueChange={(value) =>
-                setGameParams((prev) => ({
-                  ...prev,
-                  cartMaxSpeed: value[0] / 10,
-                }))
-              }
-              max={100}
-              step={1}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Item Fall Speed</label>
-            <Slider
-              value={[gameParams.itemFallSpeed * 10]}
-              onValueChange={(value) =>
-                setGameParams((prev) => ({
-                  ...prev,
-                  itemFallSpeed: value[0] / 10,
-                }))
-              }
-              max={100}
-              step={1}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Money Spawn Rate</label>
-            <Slider
-              value={[gameParams.moneySpawnRate * 1000]}
-              onValueChange={(value) =>
-                setGameParams((prev) => ({
-                  ...prev,
-                  moneySpawnRate: value[0] / 1000,
-                }))
-              }
-              max={100}
-              step={1}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="w-72">
+        <Card>
+          <CardHeader>
+            <CardTitle>Game Parameters</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Cart Speed</label>
+              <Slider
+                value={[gameParams.cartSpeed * 100]}
+                onValueChange={(value) =>
+                  setGameParams((prev) => ({
+                    ...prev,
+                    cartSpeed: value[0] / 100,
+                  }))
+                }
+                max={100}
+                step={1}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Cart Max Speed</label>
+              <Slider
+                value={[gameParams.cartMaxSpeed * 10]}
+                onValueChange={(value) =>
+                  setGameParams((prev) => ({
+                    ...prev,
+                    cartMaxSpeed: value[0] / 10,
+                  }))
+                }
+                max={100}
+                step={1}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Item Fall Speed</label>
+              <Slider
+                value={[gameParams.itemFallSpeed * 10]}
+                onValueChange={(value) =>
+                  setGameParams((prev) => ({
+                    ...prev,
+                    itemFallSpeed: value[0] / 10,
+                  }))
+                }
+                max={100}
+                step={1}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Money Spawn Rate</label>
+              <Slider
+                value={[gameParams.moneySpawnRate * 1000]}
+                onValueChange={(value) =>
+                  setGameParams((prev) => ({
+                    ...prev,
+                    moneySpawnRate: value[0] / 1000,
+                  }))
+                }
+                max={100}
+                step={1}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Bomb Spawn Rate</label>
+              <Slider
+                value={[gameParams.bombSpawnRate * 1000]}
+                onValueChange={(value) =>
+                  setGameParams((prev) => ({
+                    ...prev,
+                    bombSpawnRate: value[0] / 1000,
+                  }))
+                }
+                max={100}
+                step={1}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Game Area */}
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center flex-grow max-w-5xl">
         <div className="mb-4 text-2xl font-bold">Score: {gameState.score}</div>
         <div
           className="relative bg-blue-100 rounded-lg overflow-hidden"
@@ -355,7 +359,7 @@ const MoneyGame: FC = () => {
                 fontSize: `${MONEY_SIZE}px`,
               }}
             >
-              {bag.value === 3 ? '💎' : bag.value === 2 ? '💵' : '💰'}
+              {RewardMap[bag.type].emoji}
             </div>
           ))}
 
@@ -402,36 +406,27 @@ const MoneyGame: FC = () => {
       </div>
 
       {/* Right Side - Statistics */}
-      <Card className="p-4">
-        <CardHeader>
-          <CardTitle>Collection Stats</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <span style={{ fontSize: '24px' }}>💰</span>
-              Coins
-            </span>
-            <span className="font-bold">{gameState.collectedCoins}</span>
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <span style={{ fontSize: '24px' }}>💵</span>
-              Bills
-            </span>
-            <span className="font-bold">{gameState.collectedBills}</span>
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <span style={{ fontSize: '24px' }}>💎</span>
-              Gems
-            </span>
-            <span className="font-bold">{gameState.collectedGems}</span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="w-72">
+        <Card>
+          <CardHeader>
+            <CardTitle>Collection Stats</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {Object.entries(gameState.collection).map(([type, count], index) => (
+              <>
+                <div key={type} className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <span style={{ fontSize: '24px' }}>{RewardMap[type as RewardType].emoji}</span>
+                    {RewardMap[type as RewardType].name}
+                  </span>
+                  <span className="font-bold">{count}</span>
+                </div>
+                {index < Object.keys(gameState.collection).length - 1 && <Separator />}
+              </>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
