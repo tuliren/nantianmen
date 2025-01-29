@@ -1,161 +1,288 @@
-'use client';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { Dialog, DialogPanel } from '@headlessui/react';
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
-import { useState } from 'react';
+interface MoneyBag {
+  x: number;
+  y: number;
+  value: number;
+}
 
-const navigation = [
-  { name: 'Product', href: '#' },
-  { name: 'Features', href: '#' },
-  { name: 'Marketplace', href: '#' },
-  { name: 'Company', href: '#' },
-];
+interface Bomb {
+  x: number;
+  y: number;
+}
 
-export default function Example() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+interface GameState {
+  isGameOver: boolean;
+  score: number;
+  cartX: number;
+  cartVelocity: number;
+  moneyBags: MoneyBag[];
+  bombs: Bomb[];
+  goblinX: number;
+  goblinDirection: number;
+}
+
+const GAME_WIDTH = 800;
+const GAME_HEIGHT = 600;
+const CART_WIDTH = 100;
+const CART_HEIGHT = 60;
+const MONEY_SIZE = 40;
+const BOMB_SIZE = 30;
+const CART_SPEED = 0.5;
+const CART_FRICTION = 0.98;
+const CART_MAX_SPEED = 5;
+const ITEM_FALL_SPEED = 3;
+
+const MoneyGame: React.FC = () => {
+  const [gameState, setGameState] = useState<GameState>({
+    isGameOver: false,
+    score: 0,
+    cartX: GAME_WIDTH / 2,
+    cartVelocity: 0,
+    moneyBags: [],
+    bombs: [],
+    goblinX: 0,
+    goblinDirection: 1,
+  });
+
+  const [isMovingLeft, setIsMovingLeft] = useState(false);
+  const [isMovingRight, setIsMovingRight] = useState(false);
+  const gameLoopRef = useRef<number>();
+  const lastTimeRef = useRef<number>(0);
+
+  // Handle keyboard controls
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === 'ArrowLeft') setIsMovingLeft(true);
+      if (e.key === 'ArrowRight') setIsMovingRight(true);
+    };
+
+    const handleKeyUp = (e: KeyboardEvent): void => {
+      if (e.key === 'ArrowLeft') setIsMovingLeft(false);
+      if (e.key === 'ArrowRight') setIsMovingRight(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  // Game loop
+  const updateGame = useCallback(
+    (timestamp: number): void => {
+      if (!lastTimeRef.current) lastTimeRef.current = timestamp;
+      lastTimeRef.current = timestamp;
+
+      setGameState((prevState) => {
+        if (prevState.isGameOver) return prevState;
+
+        // Update cart velocity with inertia
+        let newVelocity = prevState.cartVelocity;
+        if (isMovingLeft) newVelocity -= CART_SPEED;
+        if (isMovingRight) newVelocity += CART_SPEED;
+        newVelocity *= CART_FRICTION;
+        newVelocity = Math.max(Math.min(newVelocity, CART_MAX_SPEED), -CART_MAX_SPEED);
+
+        // Update cart position
+        let newCartX = prevState.cartX + newVelocity;
+        newCartX = Math.max(CART_WIDTH / 2, Math.min(newCartX, GAME_WIDTH - CART_WIDTH / 2));
+
+        // Update goblin position
+        let newGoblinX = prevState.goblinX + prevState.goblinDirection * 2;
+        let newGoblinDirection = prevState.goblinDirection;
+        if (newGoblinX <= 0 || newGoblinX >= GAME_WIDTH) {
+          newGoblinDirection *= -1;
+          newGoblinX = prevState.goblinX + newGoblinDirection * 2;
+        }
+
+        // Spawn new money bags randomly
+        const newMoneyBags = [...prevState.moneyBags];
+        if (Math.random() < 0.02) {
+          newMoneyBags.push({
+            x: Math.random() * (GAME_WIDTH - MONEY_SIZE),
+            y: -MONEY_SIZE,
+            value: Math.floor(Math.random() * 3) + 1, // 1 to 3 value
+          });
+        }
+
+        // Spawn bombs from goblin
+        const newBombs = [...prevState.bombs];
+        if (Math.random() < 0.01) {
+          newBombs.push({
+            x: newGoblinX,
+            y: BOMB_SIZE,
+          });
+        }
+
+        // Update positions and check collisions
+        let newScore = prevState.score;
+        let gameOver = false;
+
+        // Update money bags
+        const updatedMoneyBags = newMoneyBags.filter((bag) => {
+          bag.y += ITEM_FALL_SPEED;
+
+          // Check collision with cart
+          if (
+            bag.y + MONEY_SIZE > GAME_HEIGHT - CART_HEIGHT &&
+            bag.x + MONEY_SIZE > newCartX - CART_WIDTH / 2 &&
+            bag.x < newCartX + CART_WIDTH / 2
+          ) {
+            newScore += bag.value;
+            return false;
+          }
+
+          return bag.y < GAME_HEIGHT;
+        });
+
+        // Update bombs
+        const updatedBombs = newBombs.filter((bomb) => {
+          bomb.y += ITEM_FALL_SPEED;
+
+          // Check collision with cart
+          if (
+            bomb.y + BOMB_SIZE > GAME_HEIGHT - CART_HEIGHT &&
+            bomb.x + BOMB_SIZE > newCartX - CART_WIDTH / 2 &&
+            bomb.x < newCartX + CART_WIDTH / 2
+          ) {
+            gameOver = true;
+            return false;
+          }
+
+          return bomb.y < GAME_HEIGHT;
+        });
+
+        return {
+          ...prevState,
+          cartX: newCartX,
+          cartVelocity: newVelocity,
+          moneyBags: updatedMoneyBags,
+          bombs: updatedBombs,
+          goblinX: newGoblinX,
+          goblinDirection: newGoblinDirection,
+          score: newScore,
+          isGameOver: gameOver,
+        };
+      });
+
+      gameLoopRef.current = requestAnimationFrame(updateGame);
+    },
+    [isMovingLeft, isMovingRight]
+  );
+
+  // Start/stop game loop
+  useEffect(() => {
+    gameLoopRef.current = requestAnimationFrame(updateGame);
+    return () => {
+      if (gameLoopRef.current) {
+        cancelAnimationFrame(gameLoopRef.current);
+      }
+    };
+  }, [updateGame]);
+
+  const restartGame = (): void => {
+    setGameState({
+      isGameOver: false,
+      score: 0,
+      cartX: GAME_WIDTH / 2,
+      cartVelocity: 0,
+      moneyBags: [],
+      bombs: [],
+      goblinX: 0,
+      goblinDirection: 1,
+    });
+    lastTimeRef.current = 0;
+  };
 
   return (
-    <div className="bg-white">
-      <header className="absolute inset-x-0 top-0 z-50">
-        <nav aria-label="Global" className="flex items-center justify-between p-6 lg:px-8">
-          <div className="flex lg:flex-1">
-            <a href="#" className="-m-1.5 p-1.5">
-              <span className="sr-only">Your Company</span>
-              <img
-                alt=""
-                src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
-                className="h-8 w-auto"
-              />
-            </a>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
+      <div className="mb-4 text-2xl font-bold">Score: {gameState.score}</div>
+      <div
+        className="relative bg-blue-100 rounded-lg overflow-hidden"
+        style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}
+      >
+        {/* Money God (static at top) */}
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2" style={{ fontSize: '40px' }}>
+          💰
+        </div>
+
+        {/* Goblin */}
+        <div
+          className="absolute"
+          style={{
+            left: gameState.goblinX,
+            top: '20px',
+            fontSize: '30px',
+            transform: `scaleX(${gameState.goblinDirection})`,
+          }}
+        >
+          👺
+        </div>
+
+        {/* Money Bags */}
+        {gameState.moneyBags.map((bag, index) => (
+          <div
+            key={`money-${index}`}
+            className="absolute"
+            style={{
+              left: bag.x,
+              top: bag.y,
+              fontSize: `${MONEY_SIZE}px`,
+            }}
+          >
+            {bag.value === 3 ? '💎' : bag.value === 2 ? '💵' : '💰'}
           </div>
-          <div className="flex lg:hidden">
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(true)}
-              className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700"
-            >
-              <span className="sr-only">Open main menu</span>
-              <Bars3Icon aria-hidden="true" className="h-6 w-6" />
-            </button>
+        ))}
+
+        {/* Bombs */}
+        {gameState.bombs.map((bomb, index) => (
+          <div
+            key={`bomb-${index}`}
+            className="absolute"
+            style={{
+              left: bomb.x,
+              top: bomb.y,
+              fontSize: `${BOMB_SIZE}px`,
+            }}
+          >
+            💣
           </div>
-          <div className="hidden lg:flex lg:gap-x-12">
-            {navigation.map((item) => (
-              <a key={item.name} href={item.href} className="text-sm font-semibold leading-6 text-gray-900">
-                {item.name}
-              </a>
-            ))}
-          </div>
-          <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-            <a href="#" className="text-sm font-semibold leading-6 text-gray-900">
-              Log in <span aria-hidden="true">&rarr;</span>
-            </a>
-          </div>
-        </nav>
-        <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
-          <div className="fixed inset-0 z-50" />
-          <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
-            <div className="flex items-center justify-between">
-              <a href="#" className="-m-1.5 p-1.5">
-                <span className="sr-only">Your Company</span>
-                <img
-                  alt=""
-                  src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
-                  className="h-8 w-auto"
-                />
-              </a>
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(false)}
-                className="-m-2.5 rounded-md p-2.5 text-gray-700"
-              >
-                <span className="sr-only">Close menu</span>
-                <XMarkIcon aria-hidden="true" className="h-6 w-6" />
+        ))}
+
+        {/* Cart */}
+        <div
+          className="absolute bottom-0 transform -translate-x-1/2"
+          style={{
+            left: gameState.cartX,
+            width: CART_WIDTH,
+            height: CART_HEIGHT,
+            fontSize: '40px',
+          }}
+        >
+          🛒
+        </div>
+
+        {/* Game Over Screen */}
+        {gameState.isGameOver && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="bg-white p-8 rounded-lg text-center">
+              <h2 className="text-2xl font-bold mb-4">Game Over!</h2>
+              <p className="mb-4">Final Score: {gameState.score}</p>
+              <button onClick={restartGame} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Play Again
               </button>
             </div>
-            <div className="mt-6 flow-root">
-              <div className="-my-6 divide-y divide-gray-500/10">
-                <div className="space-y-2 py-6">
-                  {navigation.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-                <div className="py-6">
-                  <a
-                    href="#"
-                    className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
-                  >
-                    Log in
-                  </a>
-                </div>
-              </div>
-            </div>
-          </DialogPanel>
-        </Dialog>
-      </header>
-
-      <div className="relative isolate px-6 pt-14 lg:px-8">
-        <div
-          aria-hidden="true"
-          className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
-        >
-          <div
-            style={{
-              clipPath:
-                'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-            }}
-            className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
-          />
-        </div>
-        <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
-          <div className="hidden sm:mb-8 sm:flex sm:justify-center">
-            <div className="relative rounded-full px-3 py-1 text-sm leading-6 text-gray-600 ring-1 ring-gray-900/10 hover:ring-gray-900/20">
-              Announcing our next round of funding.{' '}
-              <a href="#" className="font-semibold text-indigo-600">
-                <span aria-hidden="true" className="absolute inset-0" />
-                Read more <span aria-hidden="true">&rarr;</span>
-              </a>
-            </div>
           </div>
-          <div className="text-center">
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-              Data to enrich your online business
-            </h1>
-            <p className="mt-6 text-lg leading-8 text-gray-600">
-              Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui lorem cupidatat commodo. Elit sunt amet
-              fugiat veniam occaecat fugiat aliqua.
-            </p>
-            <div className="mt-10 flex items-center justify-center gap-x-6">
-              <a
-                href="#"
-                className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                Get started
-              </a>
-              <a href="#" className="text-sm font-semibold leading-6 text-gray-900">
-                Learn more <span aria-hidden="true">→</span>
-              </a>
-            </div>
-          </div>
-        </div>
-        <div
-          aria-hidden="true"
-          className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]"
-        >
-          <div
-            style={{
-              clipPath:
-                'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-            }}
-            className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]"
-          />
-        </div>
+        )}
       </div>
+
+      <div className="mt-4 text-gray-600">Use left and right arrow keys to move the cart</div>
     </div>
   );
-}
+};
+
+export default MoneyGame;
