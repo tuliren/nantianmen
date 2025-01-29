@@ -20,6 +20,7 @@
   },
   "rules": {
     "import/no-cycle": "error",
+    "curly": "error",
     "import/newline-after-import": [
       "error",
       {
