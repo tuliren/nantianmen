@@ -1,10 +1,6 @@
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
-import {
-  RewardType,
-  getRandomReward,
-  SortedRewards, RewardMap,
-} from '@/components/rewards';
+import { RewardMap, RewardType, SortedRewards, getRandomReward } from '@/components/rewards';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
