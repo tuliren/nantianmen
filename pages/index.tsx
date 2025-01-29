@@ -249,8 +249,7 @@ const MoneyGame: FC = () => {
           className="relative bg-blue-100 rounded-lg overflow-hidden"
           style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}
         >
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2"
-               style={{ fontSize: '40px' }}>
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2" style={{ fontSize: '40px' }}>
             💰
           </div>
 
@@ -307,13 +306,11 @@ const MoneyGame: FC = () => {
           </div>
 
           {gameState.isGameOver && (
-            <div
-              className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
               <div className="bg-white p-8 rounded-lg text-center">
                 <h2 className="text-2xl font-bold mb-4">Game Over!</h2>
                 <p className="mb-4">Final Score: {gameState.score}</p>
-                <button onClick={restartGame}
-                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                <button onClick={restartGame} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
                   Play Again
                 </button>
               </div>
@@ -322,7 +319,7 @@ const MoneyGame: FC = () => {
         </div>
 
         <div className="m-4 text-gray-600">Use left and right arrow keys to move the cart</div>
-        <div className={cn('flex gap-8', `w-[${GAME_WIDTH}px]`)}>
+        <div className="flex gap-8" style={{ width: `${GAME_WIDTH}px` }}>
           <Card className="w-1/2">
             <CardHeader>
               <CardTitle>Game Parameters</CardTitle>
@@ -408,10 +405,10 @@ const MoneyGame: FC = () => {
               {Object.entries(gameState.collection).map(([type, count], index) => (
                 <Fragment key={type}>
                   <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <span style={{ fontSize: '24px' }}>{RewardMap[type as RewardType].emoji}</span>
-                    {RewardMap[type as RewardType].name}
-                  </span>
+                    <span className="flex items-center gap-2">
+                      <span style={{ fontSize: '24px' }}>{RewardMap[type as RewardType].emoji}</span>
+                      {RewardMap[type as RewardType].name}
+                    </span>
                     <span className="font-bold">{count}</span>
                   </div>
                   {index < Object.keys(gameState.collection).length - 1 && <Separator />}
