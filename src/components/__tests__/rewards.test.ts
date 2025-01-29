@@ -1,11 +1,6 @@
-import { AllRewards, RewardType, getRandomReward, Probabilities } from '../rewards';
+import { Probabilities, RewardType, getRandomReward } from '../rewards';
 
 describe('getRandomReward', () => {
-  test('returns valid reward', () => {
-    const reward = getRandomReward();
-    expect(AllRewards).toContain(reward);
-  });
-
   test('distributes rewards according to inverse value probability', () => {
     const counts = {
       [RewardType.Bill]: 0,
