@@ -240,7 +240,7 @@ const MoneyGame: FC = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen p-8">
+    <div className="flex justify-center gap-8 items-center min-h-screen p-8">
       {/* Left Side - Parameters */}
       <div className="w-72">
         <Card>
