@@ -1,6 +1,3 @@
-import { AppShell, Container, MantineProvider } from '@mantine/core';
-import '@mantine/core/styles.css';
-import { Notifications } from '@mantine/notifications';
 import PlausibleProvider from 'next-plausible';
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
@@ -23,12 +20,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
       </Head>
 
       <PlausibleProvider domain="nantianmen.liren.dev" enabled={enableAnalytics}>
-        <MantineProvider>
-          <Notifications />
-          <Container fluid>
-            <Component {...pageProps} />
-          </Container>
-        </MantineProvider>
+        <Component {...pageProps} />
       </PlausibleProvider>
     </>
   );
