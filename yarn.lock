@@ -2906,54 +2906,54 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mantine/core@npm:^7.16.2":
-  version: 7.16.2
-  resolution: "@mantine/core@npm:7.16.2"
+"@mantine/core@npm:^8.0.2":
+  version: 8.0.2
+  resolution: "@mantine/core@npm:8.0.2"
   dependencies:
     "@floating-ui/react": "npm:^0.26.28"
     clsx: "npm:^2.1.1"
     react-number-format: "npm:^5.4.3"
     react-remove-scroll: "npm:^2.6.2"
-    react-textarea-autosize: "npm:8.5.6"
+    react-textarea-autosize: "npm:8.5.9"
     type-fest: "npm:^4.27.0"
   peerDependencies:
-    "@mantine/hooks": 7.16.2
+    "@mantine/hooks": 8.0.2
     react: ^18.x || ^19.x
     react-dom: ^18.x || ^19.x
-  checksum: c359f44f12b52a2867b0607d847d4e2ef1e6270268949f5a7beef784bbbbad247d5fc492c22d9d84e59d6cb887f202be44d2915356dd976c1329a7f2aaaa2f0c
+  checksum: 10ca6258bcc4e475fbb213724ad6e654396434d7345a315c60880c7fc639ffaa5b42b85d3e768364fcb869042357a52cfd6532dfc6daf1b5ba5370a9ca15936d
   languageName: node
   linkType: hard
 
-"@mantine/hooks@npm:^7.16.2":
-  version: 7.16.2
-  resolution: "@mantine/hooks@npm:7.16.2"
+"@mantine/hooks@npm:^8.0.2":
+  version: 8.0.2
+  resolution: "@mantine/hooks@npm:8.0.2"
   peerDependencies:
     react: ^18.x || ^19.x
-  checksum: 392bbd4d875db82305be7e5cc658f693c8add70b24aae0bc13c2e74078c6ac11e11926cd61431b28fd37a405f1706ce65658c3c47d252d29a94159aaca6bd3c4
+  checksum: 1c68325ee0093923c7bbbde7f1b39600ae72751f254bd336989afe50d08a9c14810465ddfdb62e261e83711d334c292d6ac789a546a8df0e14a2f4f51812efda
   languageName: node
   linkType: hard
 
-"@mantine/notifications@npm:^7.16.2":
-  version: 7.16.2
-  resolution: "@mantine/notifications@npm:7.16.2"
+"@mantine/notifications@npm:^8.0.2":
+  version: 8.0.2
+  resolution: "@mantine/notifications@npm:8.0.2"
   dependencies:
-    "@mantine/store": "npm:7.16.2"
+    "@mantine/store": "npm:8.0.2"
     react-transition-group: "npm:4.4.5"
   peerDependencies:
-    "@mantine/core": 7.16.2
-    "@mantine/hooks": 7.16.2
+    "@mantine/core": 8.0.2
+    "@mantine/hooks": 8.0.2
     react: ^18.x || ^19.x
     react-dom: ^18.x || ^19.x
-  checksum: aecd3b5984742b2c2e83b932daedbed4fac9600b7a33d7b29b4ef0d67e6f14045e4d57f1c7ba91382bcb6667356ddbd19720fc288431c283e2b2a60b53acc337
+  checksum: 5fc0b0fbf8730c47f92359a091575c2c2ef3e7a100c67a2641c26da2821d35f8e2c935ca9bc976db74188c0c3333c79ac84f178a7f2fd0c6d7e14e2b1d463db3
   languageName: node
   linkType: hard
 
-"@mantine/store@npm:7.16.2":
-  version: 7.16.2
-  resolution: "@mantine/store@npm:7.16.2"
+"@mantine/store@npm:8.0.2":
+  version: 8.0.2
+  resolution: "@mantine/store@npm:8.0.2"
   peerDependencies:
     react: ^18.x || ^19.x
-  checksum: fb61118ed7b7805f85de824a92cde54f476df7e365fad7af10851585af1eb026666850b069c4dd7b11c5ef970a5e635e59c9b9273c1bdf879c00e08edb4e6fad
+  checksum: fb674950999f030ad9e3545ad4322abe4245b6e05818343a30da0efe45aebcf7077bb0eaea0b7c52d6a335d0b474e7a461528b8d1a9ba97165f0b2b852f27de4
   languageName: node
   linkType: hard
 
@@ -11629,9 +11629,9 @@ __metadata:
     "@chromatic-com/storybook": "npm:^3"
     "@headlessui/react": "npm:^2.1.3"
     "@heroicons/react": "npm:^2.1.5"
-    "@mantine/core": "npm:^7.16.2"
-    "@mantine/hooks": "npm:^7.16.2"
-    "@mantine/notifications": "npm:^7.16.2"
+    "@mantine/core": "npm:^8.0.2"
+    "@mantine/hooks": "npm:^8.0.2"
+    "@mantine/notifications": "npm:^8.0.2"
     "@next/eslint-plugin-next": "npm:^14.0.4"
     "@radix-ui/react-icons": "npm:^1.3.2"
     "@radix-ui/react-label": "npm:^2.1.0"
@@ -13067,16 +13067,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-textarea-autosize@npm:8.5.6":
-  version: 8.5.6
-  resolution: "react-textarea-autosize@npm:8.5.6"
+"react-textarea-autosize@npm:8.5.9":
+  version: 8.5.9
+  resolution: "react-textarea-autosize@npm:8.5.9"
   dependencies:
     "@babel/runtime": "npm:^7.20.13"
     use-composed-ref: "npm:^1.3.0"
     use-latest: "npm:^1.2.1"
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 652d290d316c55a253507ecf65ca27f2162801dace10c715f2241203e81d82e9de6d282095b758b26c6bc9e1af9ca552cab5c3a361b230e5fcf25bec31e1bd25
+  checksum: 3a924db59259a6e3b834dcddc12a8661b43dcdaa1b43c41c732e0548bb2761e9a53dbc6db4e0d9e237728b4869e42c25e5417408b0391aec290c90874733a09f
   languageName: node
   linkType: hard
 
